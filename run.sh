@@ -43,7 +43,7 @@ wget -O keybds.py https://raw.githubusercontent.com/Lordsniffer22/force/main/key
 #BUILD AN ENV
 cat <<EOF > .env
 RAVE_SECRET_KEY= FLWSECK-c0554fe039b959856c60903e8d14aedb-18fe9ef3dacvt-X
-BOT_KEYS= 7059651547:AAEuJcszTHsGhd5-zHFQEU-INI79UVkO6zQ
+QUIK_TOKEN= 7059651547:AAEuJcszTHsGhd5-zHFQEU-INI79UVkO6zQ
 ADMIN_CHAT_ID= 6448112643
 EOF
 
