@@ -1,3 +1,4 @@
+#!/bin/bash
 docker exec -it joins rm fas.py
 docker exec -it joins rm bond.py
 wget -O fas.py https://raw.githubusercontent.com/Lordsniffer22/force/main/fas.py &>/dev/null
