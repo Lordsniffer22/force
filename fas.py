@@ -17,6 +17,9 @@ from aiogram.types import (
 )
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import keybds
+import bond
+
+
 load_dotenv()
 TOKENX = os.getenv('QUIK_TOKEN')
 dp = Dispatcher()
@@ -48,9 +51,10 @@ async def start_msg(message: Message):
 @dp.message(F.text.lower() == 'password')
 async def send_passwds(message: Message):
     user_id = message.from_user.id
+    password = bond.Pass
 
     if (await check_subscription(UDP_CUSTOM, user_id) and await check_subscription(UDP_REQUEST, user_id)):
-        await message.reply('The current password is: <code>@udpcustom</code>')
+        await message.reply(f'The current password is: <code>{password}</code>')
     else:
         force = await message.reply(
             "You must first be a Member in these Channels. Please join the channels to proceed.",
@@ -157,12 +161,13 @@ async def handle_phone_number(message: types.Message):
 @dp.callback_query(lambda query: query.data == 'verify')
 async def verifs(query: CallbackQuery):
     user_id = query.from_user.id
+    password = bond.Pass
     await query.message.delete()
     delet = await query.message.answer('Okay, Hold on a second...')
     await asyncio.sleep(4)
     await delet.delete()
     if (await check_subscription(UDP_CUSTOM, user_id) and await check_subscription(UDP_REQUEST, user_id)):
-        await query.message.answer('The current password is: ABCD')
+        await query.message.answer(F'The current password is: <code>{password}</code>')
     else:
         await query.message.answer(
             "Not a joke! No passwords unless the condition is met. \n➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n👉Join the channels below and try again.",
