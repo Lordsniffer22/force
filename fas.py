@@ -18,6 +18,7 @@ from aiogram.types import (
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 import keybds
 import bond
+import importlib
 
 
 load_dotenv()
@@ -27,7 +28,7 @@ bot = Bot(token=TOKENX, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 #Flutter
 SECRET = os.getenv('RAVE_SECRET_KEY')
 rave = Rave("FLWPUBK-1ab67f97ba59d47b65d67001eb794a05-X", SECRET, production=True)
-
+TESLASSH = int(os.getenv('ADMIN_CHAT_ID'))
 
 UDP_CUSTOM = '-1001653400671'
 UDP_REQUEST = '-1002036959256'
@@ -35,6 +36,7 @@ force_msg1 = {}
 user_states = {}
 STATE_NONE = 'none'
 MOMO_STATE = 'awaiting_number'
+PREMIUM_STATE = 'awaiting_prem'
 print(TOKENX)
 async def check_subscription(chat_id: int, user_id: int) -> bool:
     try:
@@ -48,23 +50,43 @@ async def start_msg(message: Message):
     start_msg = 'Hello, welcome to the Danger zone!\n\nOnly Bad ass dudes know this bot. Go back to your village🤡'
     await message.reply(start_msg, reply_markup=keybds.keyb)
 
-@dp.message(F.text.lower() == 'password')
+@dp.message(F.text.lower() == '🔐password')
 async def send_passwds(message: Message):
     user_id = message.from_user.id
     password = bond.Pass
-
     if (await check_subscription(UDP_CUSTOM, user_id) and await check_subscription(UDP_REQUEST, user_id)):
-        await message.reply(f'The current password is: <code>{password}</code>')
+        await message.reply(f'<b>Current password:</b> <code>{password}</code>\n➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n'
+                                   '<b><i>Get more channel subs using this bot.</i></b>', reply_markup=keybds.promote.as_markup())
     else:
         force = await message.reply(
             "You must first be a Member in these Channels. Please join the channels to proceed.",
             reply_markup=keybds.builder.as_markup())
-@dp.message(F.text.lower() == 'clone bot')
+@dp.message(F.text.lower() == '⚡️premium')
 async def cloner(message: Message):
-    await message.reply('This feature is currently unavailable. \n➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n'
-                        'If you are a channel owner and you want to set this feature too, Please contact @teslassh for assistance')
+    await message.reply('This feature is currently unavailable in the bot. \n➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n'
+                        'If you want to switch to customized personal file with good speeds, Please contact @teslassh for price discussions',
+                        reply_markup=keybds.pay_button.as_markup())
+@dp.message(F.text.startswith('/pass'))
+async def password_set(message: Message):
+    msg = message.text
+    parts = msg.split()
+    user_id = message.from_user.id
+    if user_id == TESLASSH:
+        with open('bond.py', 'r+') as f:
+            content = f.read()
+            contents = f"Old {content}"
+        await message.reply(contents)
+        await asyncio.sleep(2)
+        passwd = parts[1]
+        with open('bond.py', 'w+') as f:
+            f.write(f"Pass = '{passwd}'")
+        await message.answer(f"New Password set to: <code>{passwd}</code>")
+        importlib.reload(bond)
+    else:
+        thief = 'Are you a thief?'
+        await message.reply(thief)
 
-@dp.message(F.text.lower() == 'fix udp')
+@dp.message(F.text.lower() == '⚙️fix udp')
 async def activator(message: Message):
     Fixing = (f"<b>Hello, {message.from_user.first_name}!</b>\n\n"
               f"Airtel UG got issues with their network since May of 2024. So all they had was to re-route their network traffic through a different channel, leaving its registries not updated.\n"
@@ -104,8 +126,6 @@ async def make_charge(query: CallbackQuery):
                            'Please enter your phone number in the format:\n\n <i>07XXXXXX or 02XXXXXX or 03XXXXXX</i>:',
                            parse_mode=ParseMode.HTML)
     kill_msg[user_id] = killed
-
-
 @dp.message(lambda message: user_states.get(message.chat.id) in MOMO_STATE)
 async def handle_phone_number(message: types.Message):
     phone_number = message.text
@@ -134,6 +154,7 @@ async def handle_phone_number(message: types.Message):
 
             try:
                 res = rave.UGMobile.charge(payload)
+                print(res)
                 pay_link = res['link']
                 builder = InlineKeyboardBuilder()
                 markup = InlineKeyboardMarkup(inline_keyboard=[
@@ -148,6 +169,12 @@ async def handle_phone_number(message: types.Message):
                 await suga.delete()
                 await asyncio.sleep(300)
                 await rio.delete()
+                #status = res['transaction status']
+                #print(status)
+                #if status == 'pending':
+
+                #await check_pay_status(user_id, trx)
+
             except RaveExceptions.TransactionChargeError as e:
                 await bot.send_message(user_id, f"Transaction Charge Error: {e.err}")
             except RaveExceptions.TransactionVerificationError as e:
@@ -157,7 +184,12 @@ async def handle_phone_number(message: types.Message):
                                    'Invalid phone number format. Please enter the phone number in the format 07XXXXXX:')
     except Exception as e:
         await message.answer(f"I got this error:\n\n{e}")
-
+@dp.callback_query(lambda query: query.data == 'promo')
+async def channels(query: CallbackQuery):
+    await query.message.delete()
+    await query.message.answer('Good start!\n\n'
+                               'Contact the Bot developer\n'
+                               '╰┈➤ @teslassh')
 @dp.callback_query(lambda query: query.data == 'verify')
 async def verifs(query: CallbackQuery):
     user_id = query.from_user.id
@@ -167,7 +199,8 @@ async def verifs(query: CallbackQuery):
     await asyncio.sleep(4)
     await delet.delete()
     if (await check_subscription(UDP_CUSTOM, user_id) and await check_subscription(UDP_REQUEST, user_id)):
-        await query.message.answer(F'The current password is: <code>{password}</code>')
+        await query.message.answer(f'<b>Current password:</b> <code>{password}</code>\n➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n'
+                                   '<b><i> Get more channel subs using this bot.</i></b>', reply_markup=keybds.promote.as_markup())
     else:
         await query.message.answer(
             "Not a joke! No passwords unless the condition is met. \n➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n👉Join the channels below and try again.",
