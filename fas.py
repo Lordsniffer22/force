@@ -64,8 +64,7 @@ async def send_passwds(message: Message):
 @dp.message(F.text.lower() == '⚡️premium')
 async def cloner(message: Message):
     await message.reply('This feature is currently unavailable in the bot. \n➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n'
-                        'If you want to switch to customized personal file with good speeds, Please contact @teslassh for price discussions',
-                        reply_markup=keybds.pay_button.as_markup())
+                        'If you want to switch to customized personal file with good speeds, Please contact @teslassh for price discussions')
 @dp.message(F.text.startswith('/pass'))
 async def password_set(message: Message):
     msg = message.text
