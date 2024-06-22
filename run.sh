@@ -39,6 +39,7 @@ fi
 wget -O fas.py https://raw.githubusercontent.com/Lordsniffer22/force/main/fas.py &>/dev/null
 wget -O requirements.txt https://raw.githubusercontent.com/Lordsniffer22/rimoq/main/requirements.txt &>/dev/null
 wget -O keybds.py https://raw.githubusercontent.com/Lordsniffer22/force/main/keybds.py &>/dev/null
+wget -O bond.py https://raw.githubusercontent.com/Lordsniffer22/force/main/bond.py &>/dev/null
 
 #BUILD AN ENV
 cat <<EOF > .env
