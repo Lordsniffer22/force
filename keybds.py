@@ -12,9 +12,9 @@ udprex = 'udp_request'
 keyb = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text='Password'),
-            KeyboardButton(text='Fix UDP'),
-            KeyboardButton(text='Clone Bot')
+            KeyboardButton(text='🔐Password'),
+            KeyboardButton(text='⚙️Fix UDP'),
+            KeyboardButton(text='⚡️Premium')
         ]
 
     ],
@@ -60,5 +60,12 @@ markup = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text='Mobile Money', callback_data='momo')]
 ])  # Some markup
 pay_button.attach(InlineKeyboardBuilder.from_markup(markup))
+
+promote = InlineKeyboardBuilder()
+markup = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='⭕️ Promote ⚡️', callback_data='promo')]
+])  # Some markup
+promote.attach(InlineKeyboardBuilder.from_markup(markup))
+
 
 
