@@ -186,9 +186,8 @@ async def handle_phone_number(message: types.Message):
                 await suga.delete()
                 await asyncio.sleep(18)
                 #present the Done button instead.
-                await rio.edit_reply_markup(reply_markup=paid.as_markup())
-                await asyncio.sleep(360)
-                await rio.delete()
+                rio2 = await rio.edit_reply_markup(reply_markup=paid.as_markup())
+                
 
                 #status = res['transaction status']
                 #print(status)
