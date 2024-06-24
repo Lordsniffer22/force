@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from aiogram.enums import ParseMode
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
-from rave_python import Rave, RaveExceptions
+from rave_python import Rave, RaveExceptions, Misc
 from aiogram.types import (
     ReplyKeyboardMarkup,
     KeyboardButton,
@@ -119,14 +119,18 @@ async def make_charge(query: CallbackQuery):
     global kill_msg
     user_id = query.from_user.id
     state = MOMO_STATE
-    await query.answer('Please Enter Your Phone number (no country code)')
+    await query.message.delete()
+    await query.answer('⭕️ Waiting for Your Payment')
     user_states[user_id] = state
     killed = await bot.send_message(user_id,
                            'Please enter your phone number in the format:\n\n <i>07XXXXXX or 02XXXXXX or 03XXXXXX</i>:',
                            parse_mode=ParseMode.HTML)
     kill_msg[user_id] = killed
+
+txRef = {}
 @dp.message(lambda message: user_states.get(message.chat.id) in MOMO_STATE)
 async def handle_phone_number(message: types.Message):
+    global txRef
     phone_number = message.text
     user_id = message.chat.id
     state = user_states.get(user_id)
@@ -142,32 +146,50 @@ async def handle_phone_number(message: types.Message):
             await asyncio.sleep(4)
             await killed.delete()
             suga = await message.reply('Obtaining your OTP...')
+            txRefx = f"{Misc.generateTransactionReference(merchantId=None)}{user_id}"
 
-            payload = {
-                "amount": amount,
-                "phonenumber": phone_number,
-                "email": "bots@udpcustom.com",
-                "redirect_url": "https://rave-webhook.herokuapp.com/receivepayment",
-                "IP": ""
+            payload = {user_id: {
+
+                    "amount": amount,
+                    "phonenumber": phone_number,
+                    "email": "bots@udpcustom.com",
+                    "redirect_url": "https://rave-webhook.herokuapp.com/receivepayment",
+                    "IP": "",
+                    "txRef": txRefx
+                }
             }
+            txRef[user_id] = payload[user_id]['txRef']
 
             try:
-                res = rave.UGMobile.charge(payload)
+                res = rave.UGMobile.charge(payload[user_id])
                 print(res)
                 pay_link = res['link']
                 builder = InlineKeyboardBuilder()
                 markup = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text='Pay Now', url=pay_link)]
+                    [InlineKeyboardButton(text='⭕️ Pay Now', url=pay_link)]
                 ])
                 builder.attach(InlineKeyboardBuilder.from_markup(markup))
+
+                paid = InlineKeyboardBuilder()
+                markup = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text='Done Paying ✅', callback_data='done'),
+                     InlineKeyboardButton(text='⭕️ Pay Now', url=pay_link)]
+                ])  # Some markup
+                paid.attach(InlineKeyboardBuilder.from_markup(markup))
+
+
                 rio = await bot.send_message(user_id, f"Use the <u>Flutterwave OTP</u> You just received.\n\n"
                                                       f"<i><b>OTP</b> expires in 5 minutes</i>\n"
                                                       f" Click the <b><i>Pay Now</i></b> Button below.",
                                              parse_mode=ParseMode.HTML, reply_markup=builder.as_markup())
                 await asyncio.sleep(3)
                 await suga.delete()
-                await asyncio.sleep(300)
+                await asyncio.sleep(18)
+                #present the Done button instead.
+                await rio.edit_reply_markup(reply_markup=paid.as_markup())
+                await asyncio.sleep(360)
                 await rio.delete()
+
                 #status = res['transaction status']
                 #print(status)
                 #if status == 'pending':
@@ -183,6 +205,19 @@ async def handle_phone_number(message: types.Message):
                                    'Invalid phone number format. Please enter the phone number in the format 07XXXXXX:')
     except Exception as e:
         await message.answer(f"I got this error:\n\n{e}")
+
+@dp.callback_query(lambda query: query.data == 'done')
+async def done_paying(query: CallbackQuery):
+    try:
+        user_id = query.from_user.id
+        txref = txRef.get(user_id, f"Nothing seen for this user_id {user_id}")
+        res = rave.UGMobile.verify(txref)
+        print(res)
+        if res.get('transactionComplete', False):
+            await query.message.answer('Your payment has been approved!\n\nKindly inbox the admins @teslassh for assistance.')
+    except Exception as e:
+        await query.message.answer(f"You have not paid yet. The clock is ticking")
+
 @dp.callback_query(lambda query: query.data == 'promo')
 async def channels(query: CallbackQuery):
     await query.message.delete()
