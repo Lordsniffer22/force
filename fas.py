@@ -219,11 +219,13 @@ async def done_paying(query: CallbackQuery):
         if res.get('transactionComplete', False):
             await asyncio.sleep(3)
             await check.delete()
-            await query.message.answer('Your payment has been approved!\n\nKindly inbox the admins @teslassh for assistance.')
+            await query.message.answer('Your payment has been approved!\n\nSend KYC as the message to 175. \nMake sure you send with airtel')
     except Exception as e:
         await asyncio.sleep(3)
         await check.delete()
-        await query.message.answer(f"Oh ooh..\n\nYou have not paid yet. The clock is ticking")
+        dfr = await query.message.answer(f"Oh ooh..\n\nYou have not paid yet. The clock is ticking. \n\nI will tell my creator about this")
+        await asyncio.sleep(10)
+        await dfr.delete()
 
 @dp.callback_query(lambda query: query.data == 'promo')
 async def channels(query: CallbackQuery):
