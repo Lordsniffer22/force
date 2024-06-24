@@ -208,15 +208,22 @@ async def handle_phone_number(message: types.Message):
 
 @dp.callback_query(lambda query: query.data == 'done')
 async def done_paying(query: CallbackQuery):
+    await query.message.delete()
+    check = await query.message.answer("Alright!\n\n"
+                               "Let me confirm that first...")
     try:
         user_id = query.from_user.id
         txref = txRef.get(user_id, f"Nothing seen for this user_id {user_id}")
         res = rave.UGMobile.verify(txref)
-        print(res)
+        #print(res)
         if res.get('transactionComplete', False):
+            await asyncio.sleep(3)
+            await check.delete()
             await query.message.answer('Your payment has been approved!\n\nKindly inbox the admins @teslassh for assistance.')
     except Exception as e:
-        await query.message.answer(f"You have not paid yet. The clock is ticking")
+        await asyncio.sleep(3)
+        await check.delete()
+        await query.message.answer(f"Oh ooh..\n\nYou have not paid yet. The clock is ticking")
 
 @dp.callback_query(lambda query: query.data == 'promo')
 async def channels(query: CallbackQuery):
