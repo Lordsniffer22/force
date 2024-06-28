@@ -61,10 +61,6 @@ async def send_passwds(message: Message):
         force = await message.reply(
             "You must first be a Member in these Channels. Please join the channels to proceed.",
             reply_markup=keybds.builder.as_markup())
-@dp.message(F.text.lower() == '⚡️premium')
-async def cloner(message: Message):
-    await message.reply('This feature is currently unavailable in the bot. \n➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n'
-                        'If you want to switch to customized personal file with good speeds, Please contact @teslassh for price discussions')
 @dp.message(F.text.startswith('/pass'))
 async def password_set(message: Message):
     msg = message.text
@@ -95,6 +91,17 @@ async def activator(message: Message):
               f"⭕️ Are you ready to continue?")
     await message.reply(Fixing, reply_markup=keybds.ready.as_markup())
 
+@dp.message(F.text.lower() == '⚡️premium')
+async def premiumfile(message: Message):
+    msg = ('A premium file is always valid for 31 days.\n'
+           '➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n'
+           'What to expect:\n'
+           '-Super stable speeds\n'
+           '-24/7 admin support\n'
+           '-Free UDP activation\n'
+           '➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n'
+           'Press the button below to Make payment')
+    await message.reply(msg, reply_markup=keybds.buy_file.as_markup())
 @dp.callback_query(lambda query: query.data == 'am_ready')
 async def ready(query: CallbackQuery):
     await query.message.delete()
@@ -127,7 +134,20 @@ async def make_charge(query: CallbackQuery):
                            parse_mode=ParseMode.HTML)
     kill_msg[user_id] = killed
 
+@dp.callback_query(lambda query: query.data == 'file')
+async def make_charge(query: CallbackQuery):
+    global kill_msg
+    user_id = query.from_user.id
+    state = PREMIUM_STATE
+    await query.message.delete()
+    await query.answer('⭕️ Waiting for Your Payment')
+    user_states[user_id] = state
+    killed = await bot.send_message(user_id,
+                           'Please enter your phone number in the format:\n\n <i>07XXXXXX or 02XXXXXX or 03XXXXXX</i>:')
+    kill_msg[user_id] = killed
+
 txRef = {}
+
 @dp.message(lambda message: user_states.get(message.chat.id) in MOMO_STATE)
 async def handle_phone_number(message: types.Message):
     global txRef
@@ -139,8 +159,7 @@ async def handle_phone_number(message: types.Message):
     if state == MOMO_STATE:
         amount = 5000
     try:
-        if (phone_number.startswith('07') or phone_number.startswith('02') or phone_number.startswith('03')) and len(
-                phone_number) == 10:
+        if (phone_number.startswith('07') or phone_number.startswith('02') or phone_number.startswith('03')) and len(phone_number) == 10:
             user_states[user_id] = STATE_NONE
             killed = kill_msg[user_id]
             await asyncio.sleep(4)
@@ -178,8 +197,10 @@ async def handle_phone_number(message: types.Message):
                 paid.attach(InlineKeyboardBuilder.from_markup(markup))
 
 
-                rio = await bot.send_message(user_id, f"Use the <u>Flutterwave OTP</u> You just received.\n\n"
+                rio = await bot.send_message(user_id, f"Use the <u>Flutterwave OTP</u> You just received.\n"
+                                                      f"➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n"
                                                       f"<i><b>OTP</b> expires in 5 minutes</i>\n"
+                                                      f"➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n"
                                                       f" Click the <b><i>Pay Now</i></b> Button below.",
                                              parse_mode=ParseMode.HTML, reply_markup=builder.as_markup())
                 await asyncio.sleep(3)
@@ -187,7 +208,7 @@ async def handle_phone_number(message: types.Message):
                 await asyncio.sleep(18)
                 #present the Done button instead.
                 rio2 = await rio.edit_reply_markup(reply_markup=paid.as_markup())
-                
+
 
                 #status = res['transaction status']
                 #print(status)
@@ -204,6 +225,85 @@ async def handle_phone_number(message: types.Message):
                                    'Invalid phone number format. Please enter the phone number in the format 07XXXXXX:')
     except Exception as e:
         await message.answer(f"I got this error:\n\n{e}")
+
+
+
+@dp.message(lambda message: user_states.get(message.chat.id) in PREMIUM_STATE)
+async def handle_phone_number(message: types.Message):
+    global txRef
+    phone_number = message.text
+    user_id = message.chat.id
+    state = user_states.get(user_id)
+    amount = 0
+
+    if state == PREMIUM_STATE:
+        amount = 7000
+    try:
+        if (phone_number.startswith('07') or phone_number.startswith('02') or phone_number.startswith('03')) and len(phone_number) == 10:
+            user_states[user_id] = STATE_NONE
+            killed = kill_msg[user_id]
+            await asyncio.sleep(4)
+            await killed.delete()
+            suga = await message.reply('Obtaining your OTP...')
+            txRefx = f"{Misc.generateTransactionReference(merchantId=None)}{user_id}"
+
+            payload = {user_id: {
+
+                    "amount": amount,
+                    "phonenumber": phone_number,
+                    "email": "premium@udpcustom.com",
+                    "redirect_url": "https://rave-webhook.herokuapp.com/receivepayment",
+                    "IP": "",
+                    "txRef": txRefx
+                }
+            }
+            txRef[user_id] = payload[user_id]['txRef']
+
+            try:
+                res = rave.UGMobile.charge(payload[user_id])
+                print(res)
+                pay_link = res['link']
+                builder = InlineKeyboardBuilder()
+                markup = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text='⭕️ Pay Now', url=pay_link)]
+                ])
+                builder.attach(InlineKeyboardBuilder.from_markup(markup))
+
+                paid = InlineKeyboardBuilder()
+                markup = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text='Done Paying ✅', callback_data='done2'),
+                     InlineKeyboardButton(text='⭕️ Pay Now', url=pay_link)]
+                ])  # Some markup
+                paid.attach(InlineKeyboardBuilder.from_markup(markup))
+
+
+                rio = await bot.send_message(user_id, f"Use the <u>Flutterwave OTP</u> You just received.\n\n"
+                                                      f"<i><b>OTP</b> expires in 5 minutes</i>\n"
+                                                      f" Click the <b><i>Pay Now</i></b> Button below.",
+                                             parse_mode=ParseMode.HTML, reply_markup=builder.as_markup())
+                await asyncio.sleep(3)
+                await suga.delete()
+                await asyncio.sleep(18)
+                #present the Done button instead.
+                rio2 = await rio.edit_reply_markup(reply_markup=paid.as_markup())
+
+
+                #status = res['transaction status']
+                #print(status)
+                #if status == 'pending':
+
+                #await check_pay_status(user_id, trx)
+
+            except RaveExceptions.TransactionChargeError as e:
+                await bot.send_message(user_id, f"Transaction Charge Error: {e.err}")
+            except RaveExceptions.TransactionVerificationError as e:
+                await bot.send_message(user_id, f"Transaction Verification Error: {e.err['errMsg']}")
+        else:
+            await bot.send_message(user_id,
+                                   'Invalid phone number format. Please enter the phone number in the format 07XXXXXX:')
+    except Exception as e:
+        await message.answer(f"I got this error:\n\n{e}")
+
 
 @dp.callback_query(lambda query: query.data == 'done')
 async def done_paying(query: CallbackQuery):
@@ -225,6 +325,41 @@ async def done_paying(query: CallbackQuery):
         dfr = await query.message.answer(f"Oh ooh..\n\nYou have not paid yet. The clock is ticking. \n\nI will tell my creator about this")
         await asyncio.sleep(10)
         await dfr.delete()
+
+@dp.callback_query(lambda query: query.data == 'done2')
+async def done_paying(query: CallbackQuery):
+    await query.message.delete()
+    check = await query.message.answer("Alright!\n\n"
+                               "Let me confirm that first...")
+    try:
+        user_id = query.from_user.id
+        txref = txRef.get(user_id, f"Nothing seen for this user_id {user_id}")
+        res = rave.UGMobile.verify(txref)
+        #print(res)
+        if res.get('transactionComplete', False):
+            await asyncio.sleep(3)
+            await check.delete()
+            await query.message.answer('Your payment has been approved!\n'
+                                       '➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n'
+                                       'Inbox the Admin right now\n'
+                                       '--> @teslassh or @hackwell101 for the file')
+
+            await bot.send_message(TESLASSH, f"<b>A user named:</b> {query.from_user.first_name}\n"
+                                             f"➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n"
+                                             f"<b>Username:</b> {query.from_user.username}\n"
+                                             f"➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n"
+                                             f"<b>Has made a successful payment.</b>\n"
+                                             f"<b>Transaction ID:</b> \n"
+                                             f"{txref}\n"
+                                             f"➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖\n\n"
+                                             f"HE NEEDS A FILE.")
+    except Exception as e:
+        await asyncio.sleep(3)
+        await check.delete()
+        dfr = await query.message.answer(f"Oh ooh..\n\nYou have not paid yet. The clock is ticking. \n\nI will tell my creator about your intentions")
+        await asyncio.sleep(10)
+        await dfr.delete()
+
 
 @dp.callback_query(lambda query: query.data == 'promo')
 async def channels(query: CallbackQuery):
