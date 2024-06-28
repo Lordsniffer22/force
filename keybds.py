@@ -67,5 +67,12 @@ markup = InlineKeyboardMarkup(inline_keyboard=[
 ])  # Some markup
 promote.attach(InlineKeyboardBuilder.from_markup(markup))
 
+buy_file = InlineKeyboardBuilder()
+markup = InlineKeyboardMarkup(inline_keyboard=[
+    [InlineKeyboardButton(text='⭕️ Get Boosted Speeds⚡️', callback_data='file')]
+])  # Some markup
+buy_file.attach(InlineKeyboardBuilder.from_markup(markup))
+
+
 
 
